@@ -1,37 +1,58 @@
-#+TITLE:Some messy config
+#+TITLE:coffeemacs
 #+AUTHOR:lsdrfrx
 
 * Core configuration
 ** Options
 #+BEGIN_SRC emacs-lisp
-    (setq inhibit-startup-message t)
-    (setq display-line-numbers-type 'relative)
-    (global-display-line-numbers-mode t)
-    (global-font-lock-mode t)
-    (electric-pair-mode 1)
-    (show-paren-mode t)
-    (setq scroll-step 1)
-    (setq package-install-upgrade-built-in t)
+  ; Disable default message
+  (setq inhibit-startup-message t)
+  (setq inhibit-startup-echo-area-message t)
 
-    ; Tabs configuration
-    (setq-default indent-tabs-mode nil)
-    (setq tab-width 2)
+  ; Show relative line numbers
+  (global-display-line-numbers-mode t)
+  (setq display-line-numbers-type 'relative)
 
-    ; Turn off distracting UI components
-    (menu-bar-mode -1)
-    (tool-bar-mode -1)
-    (scroll-bar-mode -1)
+  (electric-pair-mode 1) ; Electric plugin configuration
+  (show-paren-mode t) ; Show parenthesies pairs
 
-    ; Start Emacs in fullscreen
-    (add-hook 'window-setup-hook 'toggle-frame-fullscreen t)
+  ; Scroll settings
+  (setq scroll-step 1)
+  (setq scroll-margin 5)
+  (setq package-install-upgrade-built-in t)
 
-    ; Customize font
-    (set-frame-font "Victor Mono 16" nil t)
+  ; Tabs settings
+  (setq-default indent-tabs-mode nil)
+  (setq tab-width 2)
+
+  ; Turn off distracting UI components
+  (menu-bar-mode -1)
+  (tool-bar-mode -1)
+  (scroll-bar-mode -1)
+
+  ; Start Emacs in fullscreen
+  (add-to-list 'default-frame-alist '(fullscreen . fullboth)) 
+
+  ; Font settings
+  (global-font-lock-mode t)
+  (add-to-list 'default-frame-alist '(font . "VictorMono Nerd Font 16"))
+  (setq initial-buffer-choice (lambda () (get-buffer "*dashboard*")))
 #+END_SRC
 
 ** Keybinds
+*** Treemacs
+**** Open Treemacs
 #+BEGIN_SRC emacs-lisp
-    (global-set-key "\C-x\C-b" 'electric-buffer-list)
+      (global-set-key (kbd "<space> e") 'treemacs)
+#+END_SRC
+*** Show opened buffer
+#+BEGIN_SRC emacs-lisp
+  (global-set-key "\C-x\C-b" 'electric-buffer-list)
+#+END_SRC
+
+*** Org-roam
+**** Insert new node
+#+BEGIN_SRC emacs-lisp
+  (global-set-key "\C-x\C-n" 'org-roam-node-insert)
 #+END_SRC
 
 ** Package manager setup
@@ -62,12 +83,37 @@
     )
 #+END_SRC
 
+** Hooks
+#+BEGIN_SRC emacs-lisp
+  ; TODO: Fix this hook
+  ; TODO: Move this hook to evil-mode use-package hook
+  (defun disable-evil ()
+    (if (string= (buffer-name (current-buffer)) "*scratch*")
+        (progn
+          (evil-local-mode -1)
+          (message "LIGHTWEIGHT BABYYYYYYYYYY"))))
+
+  (add-hook 'after-init-hook 'disable-evil)
+#+END_SRC
 
 * Plugins
 ** Color themes
 #+BEGIN_SRC emacs-lisp
-    (use-package catppuccin-theme)
-    (load-theme 'catppuccin :no-confirm)
+  (use-package doom-themes :ensure t)
+  (use-package kanagawa-theme :ensure t)
+;  (if (daemonp)
+;    (add-hook 'after-make-frame-functions
+;              (defun my/theme-init-daemon (frame)
+;                (with-selected-frame frame
+;                  (load-theme 'kanagawa))
+;                ;; Run this hook only once.
+;                (remove-hook 'after-make-frame-functions
+;                             #'my/theme-init-daemon)
+;                (fmakunbound 'my/theme-init-daemon)))
+  (load-theme 'kanagawa)
+
+  (set-frame-parameter nil 'alpha-background 70)
+  (add-to-list 'default-frame-alist '(alpha-background . 70))
 #+END_SRC
 
 ** Treemacs
@@ -190,47 +236,74 @@
 
 ** EVIL
 #+BEGIN_SRC emacs-lisp
-    (use-package evil)
+    (use-package evil :ensure t)
 
-    (require 'evil)
-    (evil-mode 1)
+    (with-eval-after-load 'evil-maps
+        (define-key evil-motion-state-map (kbd "SPC") nil)
+        (define-key evil-motion-state-map (kbd "RET") nil)
+        (define-key evil-motion-state-map (kbd "TAB") nil))
+
+      (evil-mode 1)
 #+END_SRC
 
 ** Org-mode
 #+BEGIN_SRC emacs-lisp
-    (require 'org-install)
-    (add-to-list 'auto-mode-alist '("\\.org$" . org-mode))
+  (add-to-list 'auto-mode-alist '("\\.org$" . org-mode))
 
-    (use-package org-evil)
-    (require 'org-evil)
+  (use-package org-evil :ensure t)
 
-    (use-package org-modern
-        :hook
-        (org-mode . global-org-modern-mode)
-        :custom
-        (org-modern-keyword nil)
-        (org-modern-checkbox nil)
-        (org-modern-table nil)
-    )
+  (setq
+      org-hide-emphasis-markers t
+      org-pretty-entities t
+      org-ellipsis "…")
 
-    (setq
-        org-hide-emphasis-markers t
-        org-pretty-entities t
-        org-ellipsis "…")
-    
-    (setq org-roam-directory (file-truename "~/notes"))
+  (setq org-return-follows-link t)
+  (setq org-roam-directory (file-truename "~/notes"))
+  (use-package org-bullets :ensure t)
+  (require 'org-bullets)
+  (add-hook 'org-mode-hook (lambda () (org-bullets-mode 1)))
 #+END_SRC
 
 ** LSP
 #+BEGIN_SRC emacs-lisp
-  
-    (use-package lsp-mode
-        :init
-        ;; set prefix for lsp-command-keymap (few alternatives - "C-l", "C-c l")
-        (setq lsp-keymap-prefix "C-c l")
-            :hook (;; replace XXX-mode with concrete major-mode(e. g. python-mode)
-                    (python-mode . lsp)
-                    ;; if you want which-key integration
-                    (lsp-mode . lsp-enable-which-key-integration))
-            :commands lsp)
+  (use-package lsp-mode :ensure t)
+
+  (setq lsp-keymap-prefix "C-c l")
+
+  (add-hook 'python-mode-hook 'lsp)
+  (add-hook 'clangd-mode-hool 'lsp)
+
+  (require 'company)
+  (add-hook 'after-init-hook 'global-company-mode)
+
+  (use-package lsp-pyright
+  :ensure t
+  :hook (python-mode . (lambda  ()
+                          (require 'lsp-pyright)
+                          (lsp))))
+#+END_SRC
+
+** Dashboard
+#+BEGIN_SRC emacs-lisp
+    (use-package dashboard
+        :ensure t
+        :config
+        (dashboard-setup-startup-hook))
+    (setq dashboard-center-content t)
+    (setq dashboard-startup-banner "~/.config/emacs/logo.png")
+    (setq dashboard-items '(
+        (recents . 5)
+        (bookmarks . 5)
+        (projects . 5)
+        (agenda . 5)))
+
+    (message (buffer-name))
+#+END_SRC
+
+** Zen-mode
+#+BEGIN_SRC emacs-lisp
+  (use-package olivetti
+    :ensure t
+    :hook (olivetti-mode . (lambda ()
+                             (display-line-numbers-mode 'toggle))))
 #+END_SRC
