@@ -484,15 +484,22 @@ Adds Vim-like keymaps for org-mode
 - Customizes characters on folded headers
 - Make header icons prettier with org-bullets
 #+BEGIN_SRC emacs-lisp
-  (use-package org-bullets :ensure t)
+  (use-package org-superstar :ensure t)
   (setq
       org-hide-emphasis-markers t
       org-pretty-entities t
-      org-ellipsis "…")
+      org-ellipsis " ")
+
+  (setq org-hide-leading-stars nil)
+  (setq org-superstar-leading-bullet ?\s)
+  (setq org-superstar-headline-bullets-list '("❃" "❂" "❁" "❀" "✿" "✾", "☷"))
 
   (setq org-return-follows-link t)
-  (add-hook 'org-mode-hook (lambda () (org-bullets-mode 1)))
+  (add-hook 'org-mode-hook (lambda () (org-superstar-mode 1)))
 #+END_SRC
+
+#+RESULTS:
+| (lambda nil (org-superstar-mode 1)) | (lambda nil (org-bullets-mode 1)) | org-evil--org-mode-hook-fn | #[0 \301\211\207 [imenu-create-index-function org-imenu-get-tree] 2] | #[0 \300\301\302\303\304$\207 [add-hook change-major-mode-hook org-show-all append local] 5] | #[0 \300\301\302\303\304$\207 [add-hook change-major-mode-hook org-babel-show-result-all append local] 5] | org-babel-result-hide-spec | org-babel-hide-all-hashes |
 
 *** Org-roam
 Setting up org-roam home directory
