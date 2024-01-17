@@ -3,6 +3,11 @@
 
 * Core configuration
 ** Options
+*** Escape
+#+BEGIN_SRC emacs-lisp
+  (global-set-key (kbd "<escape>") 'keyboard-escape-quit)
+#+END_SRC
+
 *** Startup messages
 #+BEGIN_SRC emacs-lisp
   (setq inhibit-startup-message t)
@@ -42,8 +47,10 @@
   (global-font-lock-mode t)
   (add-to-list 'default-frame-alist '(font . "VictorMono NF 16"))
   (setq initial-buffer-choice (lambda () (get-buffer "*dashboard*")))
-  
+
   (show-paren-mode t) ; Show parenthesies pairs
+
+  (set-frame-parameter nil 'internal-border-width 10) ; add frame padding
 #+END_SRC
 
 ** Package manager setup
@@ -114,7 +121,47 @@
 #+END_SRC
 
 * Plugins
-** Color themes
+** Appearance
+*** Zen-mode
+#+BEGIN_SRC emacs-lisp
+  (defvar-local toggle-mode-line-flag nil
+  "Toggle switch for mode-line display.")
+  (defun toggle-mode-line ()
+   (interactive)
+ 
+   (if toggle-mode-line-flag
+     (setq mode-line-format toggle-mode-line-flag
+             toggle-mode-line-flag nil)
+     (setq toggle-mode-line-flag mode-line-format
+           mode-line-format nil))
+   (force-mode-line-update t))
+  
+  (use-package olivetti
+    :ensure t
+    :hook (olivetti-mode . (lambda ()
+                             (display-line-numbers-mode 'toggle)
+                             (toggle-mode-line))))
+#+END_SRC
+
+*** Dashboard
+Powerful plugin that adds customizable dashboard on Emacs starts up
+#+BEGIN_SRC emacs-lisp
+    (use-package dashboard
+        :ensure t
+        :config
+        (dashboard-setup-startup-hook))
+    (setq dashboard-center-content t)
+    (setq dashboard-startup-banner "~/.config/emacs/logo.png")
+    (setq dashboard-items '(
+        (recents . 5)
+        (bookmarks . 5)
+        (projects . 5)
+        (agenda . 5)))
+
+    (message (buffer-name))
+#+END_SRC
+
+*** Color themes
 #+BEGIN_SRC emacs-lisp
   (use-package doom-themes :ensure t)
   (use-package kanagawa-theme :ensure t)
@@ -127,7 +174,178 @@
   (add-to-list 'default-frame-alist '(alpha-background . 70))
 #+END_SRC
 
-** Treemacs
+*** Nerd icons
+#+BEGIN_SRC emacs-lisp
+  (use-package nerd-icons :ensure t)
+#+END_SRC
+
+*** Mode-line
+#+BEGIN_SRC emacs-lisp
+        (use-package doom-modeline
+          :ensure t
+          :init
+          (doom-modeline-mode 1))
+#+END_SRC
+
+#+RESULTS:
+
+** Development
+*** LSP
+**** General LSP setup
+#+BEGIN_SRC emacs-lisp
+  (use-package lsp-mode
+    :ensure t
+    :commands (lsp lsp-deffered)
+    :init
+    (setq lsp-keymap-prefix "C-c l"))
+#+END_SRC
+
+**** Python
+#+BEGIN_SRC emacs-lisp
+  (use-package python-black :ensure t)
+
+  (use-package py-isort :ensure t)
+
+  (use-package lsp-pyright
+    :ensure t
+    :hook (python-mode . (lambda ()
+                            (require 'lsp-pyright)
+                            (lsp))))  ; or lsp-deferred
+#+END_SRC
+
+*** Company
+Plugin for inline code completions
+#+BEGIN_SRC emacs-lisp
+  (use-package company :ensure t)
+  (add-hook 'after-init-hook 'global-company-mode)
+  (setq company-selection-wrap-around t)
+  (with-eval-after-load 'company
+    (define-key company-active-map (kbd "TAB") #'company-select-next)
+    (define-key company-active-map [tab] #'company-select-next)
+    (define-key company-active-map (kbd "BACKTAB") #'company-select-previous)
+    (define-key company-active-map [backtab] #'company-select-previous)
+    (define-key company-active-map [escape] 'company-abort))   
+#+END_SRC
+
+*** Magit
+Powerful git client plugin
+#+BEGIN_SRC emacs-lisp
+  ; TODO: install magit properly
+  ; (use-package seq :ensure t)
+  ; (use-package magit :ensure t)
+#+END_SRC
+
+*** Ellama
+Plugin for communicating with LLM by ollama
+#+BEGIN_SRC emacs-lisp
+#+END_SRC
+
+*** EVIL
+Adds Vim keymaps to Emacs. I sick of it @_@'
+#+BEGIN_SRC emacs-lisp
+    (use-package evil :ensure t)
+
+    (with-eval-after-load 'evil-maps
+        (define-key evil-motion-state-map (kbd "SPC") nil)
+        (define-key evil-motion-state-map (kbd "RET") nil)
+        (define-key evil-motion-state-map (kbd "TAB") nil))
+
+      (evil-mode 1)
+#+END_SRC
+
+*** Projectile
+
+** Fun
+*** 2048-game
+#+BEGIN_SRC emacs-lisp
+  (use-package 2048-game :ensure t)
+#+END_SRC
+
+** Utils
+*** Ivy
+Must-have incremental search plugin
+#+BEGIN_SRC emacs-lisp
+    (use-package ivy :ensure t :diminish)
+    (use-package counsel :ensure t)
+    (ivy-mode)
+  (setq ivy-use-virtual-buffers t)
+  (setq enable-recursive-minibuffers t)
+  ;; enable this if you want `swiper' to use it
+  ;; (setq search-default-mode #'char-fold-to-regexp)
+  (global-set-key "\C-s" 'swiper)
+  (global-set-key (kbd "C-c C-r") 'ivy-resume)
+  (global-set-key (kbd "<f6>") 'ivy-resume)
+  (global-set-key (kbd "M-x") 'counsel-M-x)
+  (global-set-key (kbd "C-x C-f") 'counsel-find-file)
+  (global-set-key (kbd "<f1> f") 'counsel-describe-function)
+  (global-set-key (kbd "<f1> v") 'counsel-describe-variable)
+  (global-set-key (kbd "<f1> o") 'counsel-describe-symbol)
+  (global-set-key (kbd "<f1> l") 'counsel-find-library)
+  (global-set-key (kbd "<f2> i") 'counsel-info-lookup-symbol)
+  (global-set-key (kbd "<f2> u") 'counsel-unicode-char)
+  (global-set-key (kbd "C-c g") 'counsel-git)
+  (global-set-key (kbd "C-c j") 'counsel-git-grep)
+  (global-set-key (kbd "C-c k") 'counsel-ag)
+  (global-set-key (kbd "C-x l") 'counsel-locate)
+  (global-set-key (kbd "C-S-o") 'counsel-rhythmbox)
+  (define-key minibuffer-local-map (kbd "C-r") 'counsel-minibuffer-history)
+#+END_SRC
+
+#+RESULTS:
+: counsel-minibuffer-history
+
+*** Openwith-mode
+Allows to open linked files with specified application
+#+BEGIN_SRC emacs-lisp
+  ; TODO: configure openwith
+  (use-package openwith :ensure t)
+  (setq openwith-associations
+            (list
+             (list (openwith-make-extension-regexp
+                    '("mpg" "mpeg" "mp3" "mp4"
+                      "avi" "wmv" "wav" "mov" "flv"
+                      "ogm" "ogg" "mkv"))
+                   "vlc"
+                   '(file))
+             (list (openwith-make-extension-regexp
+                    '("xbm" "pbm" "pgm" "ppm" "pnm"
+                      "png" "gif" "bmp" "tif" "jpeg" "jpg"))
+                   "geeqie"
+                   '(file))
+             (list (openwith-make-extension-regexp
+                    '("doc" "xls" "ppt" "odt" "ods" "odg" "odp"))
+                   "libreoffice"
+                   '(file))
+             '("\\.lyx" "lyx" (file))
+             '("\\.chm" "kchmviewer" (file))
+             (list (openwith-make-extension-regexp
+                    '("pdf" "ps" "ps.gz" "dvi"))
+                   "okular"
+                   '(file))
+             ))
+      (openwith-mode 1)
+#+END_SRC
+
+*** Ob-mermaid
+Allows to make graphs directly in Emacs
+#+BEGIN_SRC emacs-lisp
+#+END_SRC
+
+*** Reverse-im
+#+BEGIN_SRC emacs-lisp
+  (use-package reverse-im
+    :ensure t
+    :config
+    (reverse-im-activate "russian-computer"))
+#+END_SRC
+
+*** Electric Pair
+Plugin for displaying opened buffers
+#+BEGIN_SRC emacs-lisp
+  (electric-pair-mode 1)
+#+END_SRC
+
+*** Treemacs
 Adds tree file explorer
 #+BEGIN_SRC emacs-lisp
     (use-package treemacs
@@ -246,18 +464,6 @@ Adds tree file explorer
     :config (treemacs-set-scope-type 'Tabs))
 #+END_SRC
 
-** EVIL
-Adds Vim keymaps to Emacs. I sick of it @_@'
-#+BEGIN_SRC emacs-lisp
-    (use-package evil :ensure t)
-
-    (with-eval-after-load 'evil-maps
-        (define-key evil-motion-state-map (kbd "SPC") nil)
-        (define-key evil-motion-state-map (kbd "RET") nil)
-        (define-key evil-motion-state-map (kbd "TAB") nil))
-
-      (evil-mode 1)
-#+END_SRC
 
 ** Org-mode
 *** Parsing .org files
@@ -294,129 +500,3 @@ Setting up org-roam home directory
   (setq org-roam-directory (file-truename "~/notes"))
 #+END_SRC
 
-** LSP
-*** General LSP setup
-#+BEGIN_SRC emacs-lisp
-  ; TODO: setup lsp properly
-  (use-package lsp-mode :ensure t)
-
-  (setq lsp-keymap-prefix "C-c l")
-
-  (add-hook 'python-mode-hook 'lsp)
-  (add-hook 'clangd-mode-hool 'lsp)
-
-  (use-package lsp-pyright
-  :ensure t
-  :hook (python-mode . (lambda  ()
-                          (require 'lsp-pyright)
-                          (lsp))))
-#+END_SRC
-
-*** Company
-Plugin for inline code completions
-#+BEGIN_SRC emacs-lisp
-  (use-package company :ensure t)
-  (add-hook 'after-init-hook 'global-company-mode)
-#+END_SRC
-
-** Dashboard
-Powerful plugin that adds customizable dashboard on Emacs starts up
-#+BEGIN_SRC emacs-lisp
-    (use-package dashboard
-        :ensure t
-        :config
-        (dashboard-setup-startup-hook))
-    (setq dashboard-center-content t)
-    (setq dashboard-startup-banner "~/.config/emacs/logo.png")
-    (setq dashboard-items '(
-        (recents . 5)
-        (bookmarks . 5)
-        (projects . 5)
-        (agenda . 5)))
-
-    (message (buffer-name))
-#+END_SRC
-
-** Zen-mode
-#+BEGIN_SRC emacs-lisp
-  (use-package olivetti
-    :ensure t
-    :hook (olivetti-mode . (lambda ()
-                             (display-line-numbers-mode 'toggle))))
-#+END_SRC
-
-** Openwith-mode
-Allows to open linked files with specified application
-#+BEGIN_SRC emacs-lisp
-  ; TODO: configure openwith
-  (use-package openwith :ensure t)
-  (setq openwith-associations
-            (list
-             (list (openwith-make-extension-regexp
-                    '("mpg" "mpeg" "mp3" "mp4"
-                      "avi" "wmv" "wav" "mov" "flv"
-                      "ogm" "ogg" "mkv"))
-                   "vlc"
-                   '(file))
-             (list (openwith-make-extension-regexp
-                    '("xbm" "pbm" "pgm" "ppm" "pnm"
-                      "png" "gif" "bmp" "tif" "jpeg" "jpg"))
-                   "geeqie"
-                   '(file))
-             (list (openwith-make-extension-regexp
-                    '("doc" "xls" "ppt" "odt" "ods" "odg" "odp"))
-                   "libreoffice"
-                   '(file))
-             '("\\.lyx" "lyx" (file))
-             '("\\.chm" "kchmviewer" (file))
-             (list (openwith-make-extension-regexp
-                    '("pdf" "ps" "ps.gz" "dvi"))
-                   "okular"
-                   '(file))
-             ))
-      (openwith-mode 1)
-#+END_SRC
-
-** Magit
-Powerful git client plugin
-#+BEGIN_SRC emacs-lisp
-  ; TODO: install magit properly
-  ; (use-package seq :ensure t)
-  ; (use-package magit :ensure t)
-#+END_SRC
-
-** Helm
-Must-have incremental search plugin
-#+BEGIN_SRC emacs-lisp
-  (use-package helm :ensure t)
-#+END_SRC
-
-** Ob-mermaid
-Allows to make graphs directly in Emacs
-#+BEGIN_SRC emacs-lisp
-#+END_SRC
-
-** Electric Pair
-Plugin for displaying opened buffers
-#+BEGIN_SRC emacs-lisp
-  (use-package electric-pair :ensure t)
-  (electric-pair-mode 1)
-#+END_SRC
-
-** Ellama
-Plugin for communicating with LLM by ollama
-#+BEGIN_SRC emacs-lisp
-#+END_SRC
-
-** Reverse-im
-#+BEGIN_SRC emacs-lisp
-  (use-package reverse-im
-    :ensure t
-    :config
-    (reverse-im-activate "russian-computer"))
-#+END_SRC
-
-** 2048-game
-#+BEGIN_SRC emacs-lisp
-  (use-package 2048-game :ensure t)
-#+END_SRC
