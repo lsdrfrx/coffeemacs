@@ -16,7 +16,7 @@
      (file . find-file)
      (wl . wl-other-frame)))
  '(package-selected-packages
-   '(org-superstar doom-modeline counsel ivy py-isort python-black beacon 2048-game reverse-im helm olivetti zen-mode doom-themes company lsp-ui org-roam-ui dashboard seq org-roam lsp-pyright lsp-mode treemacs-tab-bar treemacs-persp treemacs-magit treemacs-icons-dired treemacs-projectile treemacs-evil treemacs use-package)))
+   '(flutter lsp-dart org-superstar doom-modeline counsel ivy py-isort python-black beacon 2048-game reverse-im helm olivetti zen-mode doom-themes company lsp-ui org-roam-ui dashboard seq org-roam lsp-pyright lsp-mode treemacs-tab-bar treemacs-persp treemacs-magit treemacs-icons-dired treemacs-projectile treemacs-evil treemacs use-package)))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
